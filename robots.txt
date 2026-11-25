@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://compcalc-a1x.pages.dev/sitemap.xml

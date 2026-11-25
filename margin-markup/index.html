@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profit Margin, Markup &amp; Deal Discount Calculator — CompCalc</title>
+  <meta name="description" content="Calculate gross profit margin percentage, markup percentage, net profit, and how customer discounts affect deal profitability." />
+  <link rel="canonical" href="https://compcalc-a1x.pages.dev/margin-markup/" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body>
+  <header>
+    <div class="container nav-wrap">
+      <a href="/" class="brand">Comp<span>Calc</span></a>
+      <nav>
+        <a href="/sales-commission/">Sales Commission</a>
+        <a href="/ote-calculator/">OTE Calculator</a>
+        <a href="/hourly-to-salary/">Hourly to Salary</a>
+        <a href="/margin-markup/" class="active">Margin &amp; Markup</a>
+        <select id="currencySelect" class="currency-select" aria-label="Select Currency">
+          <option value="USD">$ USD</option>
+          <option value="GBP">£ GBP</option>
+          <option value="EUR">€ EUR</option>
+          <option value="INR">₹ INR</option>
+        </select>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Profit Margin, Markup &amp; Discount Calculator</h1>
+      <p>Calculate gross margin vs. markup and model the exact profit impact of discounting a B2B quote or retail price.</p>
+    </section>
+
+    <section class="calc-layout">
+      <div class="card">
+        <div class="form-group">
+          <label for="costPrice">Cost of Goods / Delivery Cost (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="costPrice" value="6000" min="0" step="100" />
+        </div>
+
+        <div class="form-group">
+          <label for="sellPrice">List Selling Price (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="sellPrice" value="10000" min="0" step="100" />
+        </div>
+
+        <div class="form-group">
+          <label for="discountPct">Customer Discount Offered (%) — Optional</label>
+          <input type="number" id="discountPct" value="10" min="0" max="99" step="0.5" />
+          <small>See how a discount reduces gross margin on the final discounted price.</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="result-box">
+          <div class="result-label">Final Gross Margin (After Discount)</div>
+          <div class="result-main" id="finalMargin">33.33%</div>
+          <div style="font-size:0.88rem; color:#065f46;" id="netProfitSummary">Net Profit: $3,000.00 on $9,000.00 final revenue</div>
+        </div>
+
+        <table class="breakdown-table">
+          <tbody>
+            <tr>
+              <td>Final Discounted Revenue</td>
+              <td id="finalRev">$9,000.00</td>
+            </tr>
+            <tr>
+              <td>Gross Profit Amount</td>
+              <td id="grossProfit">$3,000.00</td>
+            </tr>
+            <tr>
+              <td>Markup Percentage (on Cost)</td>
+              <td id="markupPct">50.00%</td>
+            </tr>
+            <tr>
+              <td>Pre-Discount Gross Margin</td>
+              <td id="origMargin">40.00%</td>
+            </tr>
+            <tr>
+              <td>Margin Erosion from Discount</td>
+              <td id="marginDrop">-6.67%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <article class="article-section">
+      <h2>Profit Margin vs. Markup: Key Differences</h2>
+      <p>Although margin and markup use the same gross profit dollar figure, they divide by different denominators—which is why a 50% markup equals a 33.3% gross margin.</p>
+      <div class="formula-block">
+        Gross Profit = Selling Price &minus; Cost<br/>
+        Gross Margin (%) = (Gross Profit &divide; Selling Price) &times; 100<br/>
+        Markup (%) = (Gross Profit &divide; Cost) &times; 100
+      </div>
+      <p>For sales teams and deal desks, discounting directly erodes gross profit dollar-for-dollar because delivery cost stays fixed. A 10% discount on a 40% margin deal actually cuts net profit by 25%.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container footer-wrap">
+      <div>&copy; 2026 CompCalc. For estimation and educational purposes only.</div>
+      <div class="footer-links">
+        <a href="/about.html">About</a>
+        <a href="/privacy-policy.html">Privacy Policy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const symbols = { USD: '$', GBP: '£', EUR: '€', INR: '₹' };
+    const locales = { USD: 'en-US', GBP: 'en-GB', EUR: 'de-DE', INR: 'en-IN' };
+    let curr = 'USD';
+
+    function fmt(n) {
+      return new Intl.NumberFormat(locales[curr], { style: 'currency', currency: curr, maximumFractionDigits: 2 }).format(n);
+    }
+
+    document.getElementById('currencySelect').addEventListener('change', (e) => {
+      curr = e.target.value;
+      document.querySelectorAll('.curr-sym').forEach(el => el.textContent = symbols[curr]);
+      calcMargin();
+    });
+
+    function calcMargin() {
+      const cost = parseFloat(document.getElementById('costPrice').value) || 0;
+      const list = parseFloat(document.getElementById('sellPrice').value) || 0;
+      const disc = (parseFloat(document.getElementById('discountPct').value) || 0) / 100;
+
+      const finalPrice = list * (1 - disc);
+      const profit = finalPrice - cost;
+      const margin = finalPrice > 0 ? (profit / finalPrice) * 100 : 0;
+      const markup = cost > 0 ? (profit / cost) * 100 : 0;
+      const origMargin = list > 0 ? ((list - cost) / list) * 100 : 0;
+
+      document.getElementById('finalMargin').textContent = `${margin.toFixed(2)}%`;
+      document.getElementById('netProfitSummary').textContent = `Net Profit: ${fmt(profit)} on ${fmt(finalPrice)} final revenue`;
+      document.getElementById('finalRev').textContent = fmt(finalPrice);
+      document.getElementById('grossProfit').textContent = fmt(profit);
+      document.getElementById('markupPct').textContent = `${markup.toFixed(2)}%`;
+      document.getElementById('origMargin').textContent = `${origMargin.toFixed(2)}%`;
+      document.getElementById('marginDrop').textContent = `${(margin - origMargin).toFixed(2)}%`;
+    }
+
+    ['costPrice', 'sellPrice', 'discountPct'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calcMargin);
+    });
+    calcMargin();
+  </script>
+</body>
+</html>

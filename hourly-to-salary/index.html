@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hourly to Salary &amp; Commission Calculator — CompCalc</title>
+  <meta name="description" content="Convert hourly wage to annual salary, monthly, bi-weekly, and weekly gross income—with optional sales commission and overtime hours." />
+  <link rel="canonical" href="https://compcalc-a1x.pages.dev/hourly-to-salary/" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body>
+  <header>
+    <div class="container nav-wrap">
+      <a href="/" class="brand">Comp<span>Calc</span></a>
+      <nav>
+        <a href="/sales-commission/">Sales Commission</a>
+        <a href="/ote-calculator/">OTE Calculator</a>
+        <a href="/hourly-to-salary/" class="active">Hourly to Salary</a>
+        <a href="/margin-markup/">Margin &amp; Markup</a>
+        <select id="currencySelect" class="currency-select" aria-label="Select Currency">
+          <option value="USD">$ USD</option>
+          <option value="GBP">£ GBP</option>
+          <option value="EUR">€ EUR</option>
+          <option value="INR">₹ INR</option>
+        </select>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Hourly to Salary &amp; Commission Calculator</h1>
+      <p>Convert an hourly pay rate into annual, monthly, bi-weekly, and weekly gross pay, including expected monthly commission.</p>
+    </section>
+
+    <section class="calc-layout">
+      <div class="card">
+        <div class="form-group">
+          <label for="hourlyRate">Hourly Wage (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="hourlyRate" value="30" min="0" step="0.5" />
+        </div>
+
+        <div class="form-group">
+          <label for="hoursPerWeek">Hours Worked per Week</label>
+          <input type="number" id="hoursPerWeek" value="40" min="1" max="100" step="1" />
+        </div>
+
+        <div class="form-group">
+          <label for="weeksPerYear">Working Weeks per Year</label>
+          <input type="number" id="weeksPerYear" value="52" min="1" max="52" step="1" />
+          <small>Standard full-time year is 52 weeks (2,080 hours at 40 hrs/week).</small>
+        </div>
+
+        <div class="form-group">
+          <label for="monthlyComm">Expected Monthly Commission / Bonus (<span class="curr-sym">$</span>) — Optional</label>
+          <input type="number" id="monthlyComm" value="1000" min="0" step="100" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="result-box">
+          <div class="result-label">Total Annual Gross Pay</div>
+          <div class="result-main" id="annualTotal">$74,400.00</div>
+          <div style="font-size:0.88rem; color:#065f46;" id="baseOnlyText">Base Salary: $62,400.00 + Commission: $12,000.00</div>
+        </div>
+
+        <table class="breakdown-table">
+          <tbody>
+            <tr>
+              <td>Monthly Gross Pay</td>
+              <td id="monthlyPay">$6,200.00</td>
+            </tr>
+            <tr>
+              <td>Bi-Weekly Pay (26 periods)</td>
+              <td id="biweeklyPay">$2,861.54</td>
+            </tr>
+            <tr>
+              <td>Weekly Gross Pay</td>
+              <td id="weeklyPay">$1,430.77</td>
+            </tr>
+            <tr>
+              <td>Daily Pay (5-day week)</td>
+              <td id="dailyPay">$286.15</td>
+            </tr>
+            <tr>
+              <td>Effective Hourly Rate (with Commission)</td>
+              <td id="effHourly">$35.77/hr</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <article class="article-section">
+      <h2>How to Convert Hourly Wage to Annual Salary</h2>
+      <p>To find your base annual salary before taxes, multiply your hourly rate by the number of hours you work each week, and then multiply by the number of paid weeks in a year.</p>
+      <div class="formula-block">
+        Annual Base Salary = Hourly Rate &times; Hours per Week &times; Weeks per Year<br/>
+        Total Annual Pay = Annual Base Salary + (Monthly Commission &times; 12)
+      </div>
+      <p>For a standard 40-hour workweek across 52 weeks (2,080 hours total), a quick mental shortcut is to multiply your hourly wage by 2,000 and add 4%—for example, $30/hour &times; 2,080 = $62,400 per year.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container footer-wrap">
+      <div>&copy; 2026 CompCalc. For estimation and educational purposes only.</div>
+      <div class="footer-links">
+        <a href="/about.html">About</a>
+        <a href="/privacy-policy.html">Privacy Policy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const symbols = { USD: '$', GBP: '£', EUR: '€', INR: '₹' };
+    const locales = { USD: 'en-US', GBP: 'en-GB', EUR: 'de-DE', INR: 'en-IN' };
+    let curr = 'USD';
+
+    function fmt(n) {
+      return new Intl.NumberFormat(locales[curr], { style: 'currency', currency: curr, maximumFractionDigits: 2 }).format(n);
+    }
+
+    document.getElementById('currencySelect').addEventListener('change', (e) => {
+      curr = e.target.value;
+      document.querySelectorAll('.curr-sym').forEach(el => el.textContent = symbols[curr]);
+      calcHourly();
+    });
+
+    function calcHourly() {
+      const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+      const hrs = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
+      const weeks = parseFloat(document.getElementById('weeksPerYear').value) || 0;
+      const mComm = parseFloat(document.getElementById('monthlyComm').value) || 0;
+
+      const annualBase = rate * hrs * weeks;
+      const annualComm = mComm * 12;
+      const annualTotal = annualBase + annualComm;
+      const totalHours = hrs * weeks;
+
+      document.getElementById('annualTotal').textContent = fmt(annualTotal);
+      document.getElementById('baseOnlyText').textContent = `Base Salary: ${fmt(annualBase)} + Commission: ${fmt(annualComm)}`;
+      document.getElementById('monthlyPay').textContent = fmt(annualTotal / 12);
+      document.getElementById('biweeklyPay').textContent = fmt(annualTotal / 26);
+      document.getElementById('weeklyPay').textContent = fmt(weeks > 0 ? annualTotal / weeks : 0);
+      document.getElementById('dailyPay').textContent = fmt(weeks > 0 ? annualTotal / (weeks * 5) : 0);
+      document.getElementById('effHourly').textContent = `${fmt(totalHours > 0 ? annualTotal / totalHours : 0)}/hr`;
+    }
+
+    ['hourlyRate', 'hoursPerWeek', 'weeksPerYear', 'monthlyComm'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calcHourly);
+    });
+    calcHourly();
+  </script>
+</body>
+</html>

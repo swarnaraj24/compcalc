@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTE Calculator (On-Target Earnings &amp; Quota Split) — CompCalc</title>
+  <meta name="description" content="Calculate On-Target Earnings (OTE), base vs. variable pay splits (50/50, 60/40), implied commission rate, and earnings across 50% to 150% quota attainment." />
+  <link rel="canonical" href="https://compcalc-a1x.pages.dev/ote-calculator/" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What does OTE mean in sales?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "OTE stands for On-Target Earnings. It is the total annual gross compensation a salesperson is expected to earn if they achieve 100% of their assigned sales quota, combining guaranteed base salary plus target variable commission."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a standard SaaS OTE pay mix?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Account Executives (AEs) commonly have a 50/50 pay mix (50% base salary, 50% variable commission), while Sales Development Representatives (SDRs) typically have a 60/40 or 70/30 pay mix."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <div class="container nav-wrap">
+      <a href="/" class="brand">Comp<span>Calc</span></a>
+      <nav>
+        <a href="/sales-commission/">Sales Commission</a>
+        <a href="/ote-calculator/" class="active">OTE Calculator</a>
+        <a href="/hourly-to-salary/">Hourly to Salary</a>
+        <a href="/margin-markup/">Margin &amp; Markup</a>
+        <select id="currencySelect" class="currency-select" aria-label="Select Currency">
+          <option value="USD">$ USD</option>
+          <option value="GBP">£ GBP</option>
+          <option value="EUR">€ EUR</option>
+          <option value="INR">₹ INR</option>
+        </select>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>OTE (On-Target Earnings) Calculator</h1>
+      <p>Model your base vs. variable compensation split, implied commission rate, and projected annual pay from 50% to 150% quota attainment.</p>
+    </section>
+
+    <section class="calc-layout">
+      <div class="card">
+        <div class="form-group">
+          <label for="basePay">Annual Base Salary (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="basePay" value="80000" min="0" step="1000" />
+        </div>
+
+        <div class="form-group">
+          <label for="payMix">Pay Mix Preset (Base / Variable)</label>
+          <select id="payMix">
+            <option value="50">50 / 50 (Standard AE)</option>
+            <option value="60">60 / 40 (Mid-Market / SDR)</option>
+            <option value="70">70 / 30 (SDR / Account Manager)</option>
+            <option value="80">80 / 20 (Solutions Engineer / CSM)</option>
+            <option value="custom">Custom Variable Target</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="variablePay">Target Annual Variable / Commission (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="variablePay" value="80000" min="0" step="1000" />
+        </div>
+
+        <div class="form-group">
+          <label for="annualQuota">Annual Sales Quota (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="annualQuota" value="800000" min="0" step="5000" />
+          <small>Used to calculate your implied base commission rate and quota-to-OTE ratio.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="accelMultiplier">Accelerator Multiplier Above 100% Quota (e.g., 1.5x)</label>
+          <input type="number" id="accelMultiplier" value="1.5" min="1" max="5" step="0.1" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="result-box">
+          <div class="result-label">On-Target Earnings (100% Quota)</div>
+          <div class="result-main" id="oteTotal">$160,000</div>
+          <div style="font-size:0.88rem; color:#065f46;" id="payMixSummary">50% Base / 50% Variable &bull; Monthly OTE: $13,333</div>
+        </div>
+
+        <table class="breakdown-table">
+          <tbody>
+            <tr>
+              <td>Implied Base Commission Rate</td>
+              <td id="impliedRate">10.00%</td>
+            </tr>
+            <tr>
+              <td>Accelerated Commission Rate (&gt;100%)</td>
+              <td id="accelCommRate">15.00%</td>
+            </tr>
+            <tr>
+              <td>Quota-to-OTE Ratio</td>
+              <td id="quotaRatio">5.0x</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="font-size:0.82rem; font-weight:700; color:var(--muted); margin:18px 0 6px; text-transform:uppercase;">Attainment Scenario Matrix</div>
+        <table class="breakdown-table">
+          <thead>
+            <tr>
+              <th>Attainment</th>
+              <th>Closed Sales</th>
+              <th>Total Pay</th>
+            </tr>
+          </thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <article class="article-section">
+      <h2>Understanding OTE and Quota-to-OTE Ratios</h2>
+      <p><strong>On-Target Earnings (OTE)</strong> represents your full expected annual cash compensation when hitting 100% of your assigned sales target. Unlike a guaranteed salary, OTE combines fixed base pay with at-risk variable commission.</p>
+      <div class="formula-block">
+        OTE = Annual Base Salary + On-Target Variable Commission<br/>
+        Implied Commission Rate (%) = (Target Variable &divide; Annual Quota) &times; 100<br/>
+        Quota-to-OTE Ratio = Annual Quota &divide; OTE
+      </div>
+      <p>In B2B SaaS, a healthy <strong>Quota-to-OTE ratio</strong> typically ranges between <strong>4x and 6x</strong>. If a role offers $150,000 OTE with a $750,000 annual quota (5x ratio), the quota is generally aligned with industry benchmarks. Ratios above 8x–10x often indicate an aggressive or difficult-to-attain target unless average deal sizes are large.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container footer-wrap">
+      <div>&copy; 2026 CompCalc. For estimation and educational purposes only.</div>
+      <div class="footer-links">
+        <a href="/about.html">About</a>
+        <a href="/privacy-policy.html">Privacy Policy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const symbols = { USD: '$', GBP: '£', EUR: '€', INR: '₹' };
+    const locales = { USD: 'en-US', GBP: 'en-GB', EUR: 'de-DE', INR: 'en-IN' };
+    let curr = 'USD';
+
+    function fmt(n) {
+      return new Intl.NumberFormat(locales[curr], { style: 'currency', currency: curr, maximumFractionDigits: 0 }).format(n);
+    }
+
+    document.getElementById('currencySelect').addEventListener('change', (e) => {
+      curr = e.target.value;
+      document.querySelectorAll('.curr-sym').forEach(el => el.textContent = symbols[curr]);
+      calcOTE();
+    });
+
+    document.getElementById('payMix').addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val !== 'custom') {
+        const base = parseFloat(document.getElementById('basePay').value) || 0;
+        const basePct = parseFloat(val) / 100;
+        const varPct = 1 - basePct;
+        const totalOTE = basePct > 0 ? base / basePct : 0;
+        document.getElementById('variablePay').value = Math.round(totalOTE * varPct);
+      }
+      calcOTE();
+    });
+
+    document.getElementById('variablePay').addEventListener('input', () => {
+      document.getElementById('payMix').value = 'custom';
+      calcOTE();
+    });
+
+    function calcOTE() {
+      const base = parseFloat(document.getElementById('basePay').value) || 0;
+      const mix = document.getElementById('payMix').value;
+      if (mix !== 'custom') {
+        const basePct = parseFloat(mix) / 100;
+        document.getElementById('variablePay').value = Math.round((base / basePct) * (1 - basePct));
+      }
+      const variable = parseFloat(document.getElementById('variablePay').value) || 0;
+      const quota = parseFloat(document.getElementById('annualQuota').value) || 0;
+      const mult = parseFloat(document.getElementById('accelMultiplier').value) || 1;
+
+      const ote = base + variable;
+      const baseShare = ote > 0 ? Math.round((base / ote) * 100) : 0;
+      const varShare = 100 - baseShare;
+      const impliedRate = quota > 0 ? (variable / quota) * 100 : 0;
+      const accelRate = impliedRate * mult;
+      const ratio = ote > 0 ? (quota / ote) : 0;
+
+      document.getElementById('oteTotal').textContent = fmt(ote);
+      document.getElementById('payMixSummary').textContent = `${baseShare}% Base / ${varShare}% Variable • Monthly OTE: ${fmt(ote / 12)}`;
+      document.getElementById('impliedRate').textContent = `${impliedRate.toFixed(2)}%`;
+      document.getElementById('accelCommRate').textContent = `${accelRate.toFixed(2)}%`;
+      document.getElementById('quotaRatio').textContent = `${ratio.toFixed(1)}x`;
+
+      const scenarios = [0.5, 0.75, 1.0, 1.25, 1.5];
+      const tbody = document.getElementById('matrixBody');
+      tbody.innerHTML = scenarios.map(att => {
+        const sales = quota * att;
+        let earnedVar = 0;
+        if (att <= 1.0) {
+          earnedVar = variable * att;
+        } else {
+          earnedVar = variable + (variable * (att - 1.0) * mult);
+        }
+        return `<tr>
+          <td>${Math.round(att * 100)}%</td>
+          <td style="text-align:left; font-weight:400;">${fmt(sales)}</td>
+          <td>${fmt(base + earnedVar)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    ['basePay', 'annualQuota', 'accelMultiplier'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calcOTE);
+    });
+    calcOTE();
+  </script>
+</body>
+</html>

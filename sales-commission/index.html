@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Commission Calculator (Flat, Tiered &amp; Accelerators) — CompCalc</title>
+  <meta name="description" content="Free Sales Commission Calculator supporting flat rate, tiered marginal brackets, quota attainment accelerators, base salary, and draw against commission." />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do you calculate sales commission?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Multiply total commissionable revenue (or gross profit) by the commission rate. For example, $80,000 in sales at an 8% commission rate equals $6,400 in commission."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the difference between marginal and flat tiered commission?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In a marginal (progressive) tiered plan, each higher commission rate applies only to the revenue earned within that bracket—similar to income tax brackets. In a retroactive (cliff) plan, crossing a threshold applies the higher rate to all sales in the period."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does a draw against commission work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A draw is an advance paid against future commissions. With a recoverable draw, if earned commission is less than the draw, the shortfall carries over as a balance owed against future commissions. With a non-recoverable draw, the rep keeps the guaranteed draw amount with no clawback."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <div class="container nav-wrap">
+      <a href="/" class="brand">Comp<span>Calc</span></a>
+      <nav>
+        <a href="/sales-commission/" class="active">Sales Commission</a>
+        <a href="/ote-calculator/">OTE Calculator</a>
+        <a href="/hourly-to-salary/">Hourly to Salary</a>
+        <a href="/margin-markup/">Margin &amp; Markup</a>
+        <select id="currencySelect" class="currency-select" aria-label="Select Currency">
+          <option value="USD">$ USD</option>
+          <option value="GBP">£ GBP</option>
+          <option value="EUR">€ EUR</option>
+          <option value="INR">₹ INR</option>
+        </select>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Sales Commission Calculator</h1>
+      <p>Calculate flat-rate commissions, progressive tiered brackets, quota accelerators, and draw payouts in seconds.</p>
+    </section>
+
+    <section class="calc-layout">
+      <div class="card">
+        <div class="tabs">
+          <button type="button" class="tab-btn active" data-mode="flat">Flat Commission</button>
+          <button type="button" class="tab-btn" data-mode="tiered">Tiered Brackets</button>
+        </div>
+
+        <div class="form-group">
+          <label for="salesAmount">Total Sales Revenue (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="salesAmount" value="120000" min="0" step="100" />
+        </div>
+
+        <div id="flatInputs">
+          <div class="form-group">
+            <label for="flatRate">Commission Rate (%)</label>
+            <input type="number" id="flatRate" value="8" min="0" max="100" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label for="quotaAmount">Quota Target (<span class="curr-sym">$</span>) — Optional for Accelerator</label>
+            <input type="number" id="quotaAmount" value="100000" min="0" step="100" />
+          </div>
+          <div class="form-group">
+            <label for="accelRate">Accelerator Rate Above Quota (%)</label>
+            <input type="number" id="accelRate" value="12" min="0" max="100" step="0.1" />
+            <small>Applies only to revenue above your quota target. Set equal to base rate if no accelerator applies.</small>
+          </div>
+        </div>
+
+        <div id="tieredInputs" style="display:none;">
+          <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:8px;">Progressive Commission Tiers (From → Up To → Rate %)</label>
+          <div id="tierList">
+            <div class="tier-row">
+              <input type="number" class="t-min" value="0" placeholder="From" />
+              <input type="number" class="t-max" value="50000" placeholder="Up to" />
+              <input type="number" class="t-rate" value="5" step="0.1" placeholder="%" />
+              <span></span>
+            </div>
+            <div class="tier-row">
+              <input type="number" class="t-min" value="50000" placeholder="From" />
+              <input type="number" class="t-max" value="100000" placeholder="Up to" />
+              <input type="number" class="t-rate" value="8" step="0.1" placeholder="%" />
+              <button type="button" class="remove-tier" onclick="removeTier(this)">×</button>
+            </div>
+            <div class="tier-row">
+              <input type="number" class="t-min" value="100000" placeholder="From" />
+              <input type="number" class="t-max" value="999999999" placeholder="Up to" />
+              <input type="number" class="t-rate" value="12" step="0.1" placeholder="%" />
+              <button type="button" class="remove-tier" onclick="removeTier(this)">×</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline" style="margin-bottom:16px; padding:6px 12px; font-size:0.85rem;" onclick="addTier()">+ Add Tier</button>
+        </div>
+
+        <div class="form-group">
+          <label for="baseSalary">Period Base Salary (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="baseSalary" value="5000" min="0" step="100" />
+        </div>
+
+        <div class="form-group">
+          <label for="drawAmount">Draw Against Commission (<span class="curr-sym">$</span>)</label>
+          <input type="number" id="drawAmount" value="0" min="0" step="100" />
+        </div>
+
+        <div class="form-group">
+          <label for="drawType">Draw Type</label>
+          <select id="drawType">
+            <option value="recoverable">Recoverable Draw (shortfall owed back)</option>
+            <option value="non-recoverable">Non-Recoverable Draw (guaranteed floor)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="result-box">
+          <div class="result-label">Total Gross Payout</div>
+          <div class="result-main" id="totalPayout">$15,400.00</div>
+          <div style="font-size:0.88rem; color:#065f46;" id="effectiveRateText">Effective Commission Rate: 8.67%</div>
+        </div>
+
+        <table class="breakdown-table">
+          <tbody>
+            <tr>
+              <td>Earned Commission</td>
+              <td id="resCommission">$10,400.00</td>
+            </tr>
+            <tr>
+              <td>Quota Attainment</td>
+              <td id="resAttainment">120.0%</td>
+            </tr>
+            <tr>
+              <td>Base Salary</td>
+              <td id="resBase">$5,000.00</td>
+            </tr>
+            <tr>
+              <td>Draw Adjustment / Net Variable Paid</td>
+              <td id="resDrawPaid">$10,400.00</td>
+            </tr>
+            <tr>
+              <td>Remaining Draw Balance Owed</td>
+              <td id="resDrawBalance">$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div id="tierBreakdownWrap" style="margin-top:18px;"></div>
+      </div>
+    </section>
+
+    <article class="article-section">
+      <h2>How Sales Commission Is Calculated</h2>
+      <p>A sales commission plan rewards sales representatives based on closed revenue or gross profit. Depending on your compensation agreement, commissions typically follow one of three structures:</p>
+      <ul>
+        <li><strong>Flat-Rate Commission:</strong> You earn a fixed percentage on every dollar sold, regardless of volume.</li>
+        <li><strong>Quota Accelerator Commission:</strong> You earn a standard base commission rate up to 100% of your quota, and a higher accelerated rate on all revenue closed above quota.</li>
+        <li><strong>Progressive Tiered Commission:</strong> Revenue is divided into brackets (similar to marginal tax brackets), with each bracket paying a progressively higher commission percentage.</li>
+      </ul>
+
+      <h2>Core Formulas</h2>
+      <div class="formula-block">
+        Flat Commission = Total Sales &times; (Commission Rate &divide; 100)<br/>
+        Quota Attainment (%) = (Total Sales &divide; Quota Target) &times; 100<br/>
+        Accelerator Payout = (Quota &times; Base Rate) + ((Total Sales &minus; Quota) &times; Accelerator Rate)
+      </div>
+
+      <h2>Worked Example</h2>
+      <p>Suppose an Account Executive has a monthly quota of <strong>$100,000</strong>, a base commission rate of <strong>8%</strong>, and an accelerator rate of <strong>12%</strong> above quota. If they close <strong>$120,000</strong> in a month:</p>
+      <ul>
+        <li>First $100,000 &times; 8% = <strong>$8,000</strong></li>
+        <li>Remaining $20,000 above quota &times; 12% = <strong>$2,400</strong></li>
+        <li>Total Earned Commission = <strong>$10,400</strong> (an effective blended rate of 8.67%).</li>
+      </ul>
+
+      <h2>Frequently Asked Questions</h2>
+      <p><strong>What is a recoverable vs. non-recoverable draw?</strong><br/>
+      During onboarding, companies often provide a guaranteed monthly draw while a rep builds pipeline. If your draw is $3,000 and you only earn $1,800 in commission, a <em>recoverable</em> draw means you still receive $3,000 this month, but the $1,200 shortfall is deducted from future commission checks. A <em>non-recoverable</em> draw acts as a guaranteed minimum bonus with no clawback.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container footer-wrap">
+      <div>&copy; 2026 CompCalc. For estimation and educational purposes only.</div>
+      <div class="footer-links">
+        <a href="/about.html">About</a>
+        <a href="/privacy-policy.html">Privacy Policy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const currencySymbols = { USD: '$', GBP: '£', EUR: '€', INR: '₹' };
+    const currencyLocales = { USD: 'en-US', GBP: 'en-GB', EUR: 'de-DE', INR: 'en-IN' };
+    let currentCurrency = 'USD';
+    let currentMode = 'flat';
+
+    function formatMoney(val) {
+      return new Intl.NumberFormat(currencyLocales[currentCurrency], {
+        style: 'currency',
+        currency: currentCurrency,
+        maximumFractionDigits: 2
+      }).format(val);
+    }
+
+    document.getElementById('currencySelect').addEventListener('change', (e) => {
+      currentCurrency = e.target.value;
+      document.querySelectorAll('.curr-sym').forEach(el => el.textContent = currencySymbols[currentCurrency]);
+      calculate();
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        document.getElementById('flatInputs').style.display = currentMode === 'flat' ? 'block' : 'none';
+        document.getElementById('tieredInputs').style.display = currentMode === 'tiered' ? 'block' : 'none';
+        calculate();
+      });
+    });
+
+    function addTier() {
+      const list = document.getElementById('tierList');
+      const row = document.createElement('div');
+      row.className = 'tier-row';
+      row.innerHTML = `
+        <input type="number" class="t-min" value="150000" placeholder="From" />
+        <input type="number" class="t-max" value="999999999" placeholder="Up to" />
+        <input type="number" class="t-rate" value="15" step="0.1" placeholder="%" />
+        <button type="button" class="remove-tier" onclick="removeTier(this)">×</button>
+      `;
+      list.appendChild(row);
+      bindInputs();
+      calculate();
+    }
+
+    function removeTier(btn) {
+      btn.parentElement.remove();
+      calculate();
+    }
+
+    function calculate() {
+      const sales = parseFloat(document.getElementById('salesAmount').value) || 0;
+      const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
+      const drawAmount = parseFloat(document.getElementById('drawAmount').value) || 0;
+      const drawType = document.getElementById('drawType').value;
+      const quota = parseFloat(document.getElementById('quotaAmount').value) || 0;
+
+      let commission = 0;
+      let detailRows = [];
+
+      if (currentMode === 'flat') {
+        const rate = (parseFloat(document.getElementById('flatRate').value) || 0) / 100;
+        const accelRate = (parseFloat(document.getElementById('accelRate').value) || 0) / 100;
+
+        if (quota > 0 && sales > quota) {
+          const baseComm = quota * rate;
+          const accelComm = (sales - quota) * accelRate;
+          commission = baseComm + accelComm;
+          detailRows.push({ label: `Base Quota (${formatMoney(quota)} @ ${(rate*100).toFixed(1)}%)`, val: baseComm });
+          detailRows.push({ label: `Accelerator (${formatMoney(sales - quota)} @ ${(accelRate*100).toFixed(1)}%)`, val: accelComm });
+        } else {
+          commission = sales * rate;
+          detailRows.push({ label: `Commission (${formatMoney(sales)} @ ${(rate*100).toFixed(1)}%)`, val: commission });
+        }
+      } else {
+        const rows = document.querySelectorAll('#tierList .tier-row');
+        rows.forEach((r, idx) => {
+          const min = parseFloat(r.querySelector('.t-min').value) || 0;
+          const max = parseFloat(r.querySelector('.t-max').value) || 0;
+          const rate = (parseFloat(r.querySelector('.t-rate').value) || 0) / 100;
+          if (sales > min && max > min) {
+            const taxableInTier = Math.min(sales, max) - min;
+            const tierComm = taxableInTier * rate;
+            commission += tierComm;
+            detailRows.push({ label: `Tier ${idx + 1} (${formatMoney(taxableInTier)} @ ${(rate*100).toFixed(1)}%)`, val: tierComm });
+          }
+        });
+      }
+
+      // Draw logic
+      let variablePaid = commission;
+      let drawBalance = 0;
+      if (drawAmount > 0) {
+        if (commission >= drawAmount) {
+          variablePaid = commission; // Draw covered by earned commission
+        } else {
+          variablePaid = drawAmount;
+          drawBalance = drawType === 'recoverable' ? (drawAmount - commission) : 0;
+        }
+      }
+
+      const totalPayout = baseSalary + variablePaid;
+      const effRate = sales > 0 ? (commission / sales) * 100 : 0;
+      const attainment = quota > 0 ? (sales / quota) * 100 : 0;
+
+      document.getElementById('totalPayout').textContent = formatMoney(totalPayout);
+      document.getElementById('effectiveRateText').textContent = `Effective Commission Rate: ${effRate.toFixed(2)}%`;
+      document.getElementById('resCommission').textContent = formatMoney(commission);
+      document.getElementById('resAttainment').textContent = quota > 0 ? `${attainment.toFixed(1)}%` : 'N/A';
+      document.getElementById('resBase').textContent = formatMoney(baseSalary);
+      document.getElementById('resDrawPaid').textContent = formatMoney(variablePaid);
+      document.getElementById('resDrawBalance').textContent = formatMoney(drawBalance);
+
+      const wrap = document.getElementById('tierBreakdownWrap');
+      if (detailRows.length > 0) {
+        wrap.innerHTML = `<div style="font-size:0.82rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">Commission Breakdown</div>
+          <table class="breakdown-table"><tbody>${detailRows.map(d => `<tr><td>${d.label}</td><td>${formatMoney(d.val)}</td></tr>`).join('')}</tbody></table>`;
+      } else {
+        wrap.innerHTML = '';
+      }
+    }
+
+    function bindInputs() {
+      document.querySelectorAll('input, select').forEach(el => {
+        if (el.id !== 'currencySelect') {
+          el.removeEventListener('input', calculate);
+          el.addEventListener('input', calculate);
+        }
+      });
+    }
+
+    bindInputs();
+    calculate();
+  </script>
+</body>
+</html>
